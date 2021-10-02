@@ -1,0 +1,44 @@
+---
+- name: playbook 1
+  hosts: all
+  tasks:
+    - name: install apache and firewall
+      apt:
+        name: 
+          - apache2
+          - firewalld
+        state: latest
+
+    - name: enble services
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - apache2
+        - firewalld
+
+    - name: create index.html from template
+      template:
+        src: template.j2
+        dest: /var/www/html/index.html
+      notify: restart_httpd
+
+    - name: open http service from firewall
+      firewalld:
+        service: http
+        immediate: true
+        state: enabled
+        permanent: yes
+      notify: restart_firewalld
+
+  handlers:
+    - name: restart_httpd
+      service:
+        name: apache2
+        state: restarted
+
+    - name: restart_firewalld
+      service:
+        name: firewalld
+        state: restarted
